@@ -38,51 +38,6 @@ body {
     align-items: center;
     min-height: 100vh;
     position: relative;
-    touch-action: manipulation;
-}
-
-body::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(ellipse at center, transparent 0%, rgba(255, 255, 255, 0.3) 100%);
-    pointer-events: none;
-}
-
-body::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.4) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 40%),
-        radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.2) 0%, transparent 30%);
-    pointer-events: none;
-    animation: sparkle 4s ease-in-out infinite;
-}
-
-@keyframes gradientShift {
-    0%, 100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-}
-
-@keyframes sparkle {
-    0%, 100% {
-        opacity: 0.5;
-    }
-    50% {
-        opacity: 1;
-    }
 }
 
 .container {
@@ -94,9 +49,8 @@ body::after {
     padding: 20px;
     position: relative;
     z-index: 1;
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
+    touch-action: none;
+    overflow: hidden;
 }
 
 .text-container {
@@ -116,18 +70,25 @@ body::after {
         0 2px 4px rgba(0, 0, 0, 0.12);
     letter-spacing: 0.15em;
     line-height: 1.6;
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateY(0);
-    opacity: 1;
     padding: 10px 20px;
+    font-size: clamp(1.5rem, 5vw, 3rem);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #text-display.entering {
-    animation: textEnter 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+    transform: translateY(50px) scale(0.8);
+}
+
+#text-display.entered {
+    opacity: 1;
+    transform: translateY(0) scale(1);
 }
 
 #text-display.exiting {
-    animation: textExit 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #text-display.hidden {
@@ -138,67 +99,21 @@ body::after {
 .heart {
     color: #FF7F50;
     display: inline-block;
-    animation: heartbeat 1s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 @keyframes heartbeat {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.2);
-    }
-}
-
-@keyframes textEnter {
-    0% {
-        opacity: 0;
-        transform: translateY(50px) scale(0.8);
-    }
-    60% {
-        opacity: 1;
-        transform: translateY(-10px) scale(1.05);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-@keyframes textExit {
-    0% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-30px) scale(0.9);
-    }
-}
-
-@media (max-width: 768px) {
-    #text-display {
-        letter-spacing: 0.1em;
-        font-size: clamp(1.5rem, 6vw, 3rem);
-    }
-}
-    100% {
-        opacity: 0;
-        transform: translateY(-30px) scale(0.9);
-    }
-}
-
-@media (max-width: 768px) {
-    #text-display {
-        letter-spacing: 0.1em;
-        font-size: clamp(1.5rem, 6vw, 3rem);
-    }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
 }
 
 @media (max-width: 480px) {
     .container {
         padding: 15px;
-        padding-top: max(15px, env(safe-area-inset-top));
     }
     
     .text-container {
@@ -207,19 +122,6 @@ body::after {
     
     #text-display {
         padding: 8px 16px;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    body {
-        background: linear-gradient(135deg, #00695c 0%, #00897b 25%, #00acc1 50%, #26c6da 75%, #4dd0e1 100%);
-    }
-    
-    #text-display {
-        color: #ffffff;
-        text-shadow: 
-            0 0 15px rgba(255, 255, 255, 0.2),
-            0 2px 4px rgba(0, 0, 0, 0.3);
     }
 }
 
@@ -233,20 +135,14 @@ body::after {
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
-}
-
-@keyframes fadeInOut {
-    0% { opacity: 0; }
-    20% { opacity: 1; }
-    80% { opacity: 1; }
-    100% { opacity: 0; }
+    z-index: 100;
 }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="text-container">
-            <span id="text-display" class="text"></span>
+            <span id="text-display"></span>
         </div>
     </div>
     <div class="tap-hint">点击可以继续看喔</div>
@@ -259,80 +155,84 @@ const messages = [
 ];
 
 const textDisplay = document.getElementById('text-display');
+const tapHint = document.querySelector('.tap-hint');
 let currentIndex = 0;
-let isAnimating = false;
 let isPaused = false;
 let remainingTime = 0;
 let pauseStartTime = 0;
-let exitTimeout = null;
+let exitTimer = null;
+let enterTimer = null;
 
 function displayNextMessage() {
-    if (isAnimating || isPaused) return;
-    isAnimating = true;
+    if (isPaused) return;
     
     const message = messages[currentIndex];
     remainingTime = message.time;
     
-    textDisplay.innerHTML = message.text.replace('❤', '<span class="heart">❤</span>');
+    let displayText = message.text;
+    if (message.text.includes('❤')) {
+        displayText = message.text.replace('❤', '<span class="heart">❤</span>');
+    }
+    textDisplay.innerHTML = displayText;
     textDisplay.style.fontSize = message.size + 'rem';
     
-    textDisplay.classList.remove('hidden');
-    textDisplay.classList.remove('exiting');
-    textDisplay.classList.add('entering');
+    textDisplay.className = 'entering';
     
-    setTimeout(() => {
-        textDisplay.classList.remove('entering');
+    enterTimer = setTimeout(() => {
+        textDisplay.className = 'entered';
     }, 800);
     
-    exitTimeout = setTimeout(() => {
-        textDisplay.classList.add('exiting');
+    exitTimer = setTimeout(() => {
+        textDisplay.className = 'exiting';
         
         setTimeout(() => {
-            textDisplay.classList.add('hidden');
+            textDisplay.className = 'hidden';
             currentIndex = (currentIndex + 1) % messages.length;
-            isAnimating = false;
             
-            if (!isPaused) {
-                setTimeout(displayNextMessage, 100);
-            }
+            setTimeout(() => {
+                if (!isPaused) {
+                    displayNextMessage();
+                }
+            }, 100);
         }, 800);
     }, remainingTime);
 }
 
 function togglePause() {
     if (!isPaused) {
-        clearTimeout(exitTimeout);
+        clearTimeout(exitTimer);
+        clearTimeout(enterTimer);
         pauseStartTime = Date.now();
         isPaused = true;
-        textDisplay.style.animationPlayState = 'paused';
-        document.querySelector('.tap-hint').style.opacity = '1';
+        tapHint.style.opacity = '1';
     } else {
         const pausedDuration = Date.now() - pauseStartTime;
         remainingTime = Math.max(0, remainingTime - pausedDuration);
         isPaused = false;
-        textDisplay.style.animationPlayState = 'running';
-        document.querySelector('.tap-hint').style.opacity = '0';
+        tapHint.style.opacity = '0';
         
         if (remainingTime <= 0) {
-            textDisplay.classList.add('exiting');
+            textDisplay.className = 'exiting';
             
             setTimeout(() => {
-                textDisplay.classList.add('hidden');
+                textDisplay.className = 'hidden';
                 currentIndex = (currentIndex + 1) % messages.length;
-                isAnimating = false;
-                
-                setTimeout(displayNextMessage, 100);
-            }, 800);
-        } else {
-            exitTimeout = setTimeout(() => {
-                textDisplay.classList.add('exiting');
                 
                 setTimeout(() => {
-                    textDisplay.classList.add('hidden');
+                    displayNextMessage();
+                }, 100);
+            }, 800);
+        } else {
+            exitTimer = setTimeout(() => {
+                textDisplay.className = 'exiting';
+                
+                setTimeout(() => {
+                    textDisplay.className = 'hidden';
                     currentIndex = (currentIndex + 1) % messages.length;
-                    isAnimating = false;
                     
-                    setTimeout(displayNextMessage, 100);
+                    setTimeout(() => {
+                        displayNextMessage();
+                    }, 100);
                 }, 800);
             }, remainingTime);
         }
@@ -340,17 +240,12 @@ function togglePause() {
 }
 
 window.addEventListener('load', () => {
-    setTimeout(displayNextMessage, 500);
-    
-    document.body.addEventListener('click', togglePause, { passive: true });
-    document.body.addEventListener('touchstart', togglePause, { passive: true });
+    setTimeout(() => {
+        displayNextMessage();
+    }, 500);
 });
 
-if ('standalone' in navigator && navigator.standalone) {
-    document.body.addEventListener('touchend', function() {
-        setTimeout(restartAnimation, 100);
-    }, { passive: true });
-}
+document.body.addEventListener('click', togglePause);
     </script>
 </body>
 </html>
