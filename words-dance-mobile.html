@@ -205,7 +205,6 @@ function displayNextMessage() {
         wrapper.className = 'text-wrapper';
         wrapper.style.opacity = '1';
         wrapper.style.transform = 'translateY(0) scale(1)';
-        tapHint.style.opacity = '1';
     }, 800);
     
     exitTimer = setTimeout(() => {
@@ -233,12 +232,11 @@ function togglePause() {
         clearTimeout(enterTimer);
         pauseStartTime = Date.now();
         isPaused = true;
-        tapHint.style.opacity = '0';
+        tapHint.style.opacity = '1';
     } else {
         const pausedDuration = Date.now() - pauseStartTime;
         remainingTime = Math.max(0, remainingTime - pausedDuration);
         isPaused = false;
-        tapHint.style.opacity = '1';
         
         if (remainingTime <= 0) {
             if (wrapper) {
