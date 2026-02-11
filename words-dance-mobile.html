@@ -72,7 +72,6 @@ body {
     line-height: 1.6;
     padding: 10px 20px;
     font-size: clamp(1.5rem, 5vw, 3rem);
-    opacity: 0;
 }
 
 .text-wrapper {
@@ -276,13 +275,9 @@ function togglePause() {
 
 function forceLayoutCalculation() {
     const textContainer = document.querySelector('.text-container');
-    
     void textContainer.offsetHeight;
-    
     const computedStyle = window.getComputedStyle(textDisplay);
-    const fontSize = computedStyle.fontSize;
-    
-    textDisplay.style.fontSize = fontSize;
+    textDisplay.style.fontSize = computedStyle.fontSize;
 }
 
 function startAnimation() {
@@ -298,11 +293,7 @@ function startAnimation() {
 }
 
 if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => {
-        startAnimation();
-    }).catch(() => {
-        setTimeout(startAnimation, 1000);
-    });
+    document.fonts.ready.then(startAnimation);
 } else {
     window.addEventListener('load', () => {
         setTimeout(startAnimation, 1000);
