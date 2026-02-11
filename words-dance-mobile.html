@@ -51,6 +51,15 @@ body {
     z-index: 1;
     touch-action: none;
     overflow: hidden;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s 0.3s, opacity 0.3s ease;
+}
+
+.container.ready {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
 .text-container {
@@ -74,7 +83,6 @@ body {
     font-size: clamp(1.5rem, 5vw, 3rem);
     will-change: opacity, transform;
     backface-visibility: hidden;
-    opacity: 0;
 }
 
 @keyframes fadeInUp {
@@ -139,6 +147,12 @@ body {
     transition: opacity 0.3s ease;
     pointer-events: none;
     z-index: 100;
+    visibility: hidden;
+}
+
+.tap-hint.visible {
+    opacity: 1;
+    visibility: visible;
 }
     </style>
 </head>
@@ -159,6 +173,7 @@ const messages = [
 
 const textDisplay = document.getElementById('text-display');
 const tapHint = document.querySelector('.tap-hint');
+const container = document.querySelector('.container');
 let currentIndex = 0;
 let isPaused = false;
 let remainingTime = 0;
@@ -193,6 +208,7 @@ function displayNextMessage() {
         textDisplay.style.animationName = 'none';
         textDisplay.style.opacity = '1';
         textDisplay.style.transform = 'translateY(0) scale(1)';
+        tapHint.classList.add('visible');
     }, 800);
     
     exitTimer = setTimeout(() => {
@@ -201,6 +217,8 @@ function displayNextMessage() {
         textDisplay.style.animationDuration = '800ms';
         textDisplay.style.animationTimingFunction = 'cubic-bezier(0.4, 0, 0.2, 1)';
         textDisplay.style.animationFillMode = 'forwards';
+        
+        tapHint.classList.remove('visible');
         
         setTimeout(() => {
             textDisplay.style.opacity = '0';
@@ -222,12 +240,12 @@ function togglePause() {
         clearTimeout(enterTimer);
         pauseStartTime = Date.now();
         isPaused = true;
-        tapHint.style.opacity = '1';
+        tapHint.classList.remove('visible');
     } else {
         const pausedDuration = Date.now() - pauseStartTime;
         remainingTime = Math.max(0, remainingTime - pausedDuration);
         isPaused = false;
-        tapHint.style.opacity = '0';
+        tapHint.classList.add('visible');
         
         if (remainingTime <= 0) {
             textDisplay.style.animation = 'none';
@@ -268,59 +286,43 @@ function togglePause() {
 }
 
 function forceLayoutCalculation() {
-    const container = document.querySelector('.container');
     const textContainer = document.querySelector('.text-container');
     
-    container.offsetHeight;
-    textContainer.offsetHeight;
-    textDisplay.offsetHeight;
+    void container.offsetHeight;
+    void textContainer.offsetHeight;
+    void textDisplay.offsetHeight;
     
     const computedStyle = window.getComputedStyle(textDisplay);
     const fontSize = computedStyle.fontSize;
-    const displayWidth = textDisplay.offsetWidth;
     
     textDisplay.style.fontSize = fontSize;
 }
 
-let resizeTimeout;
-let layoutStable = false;
-let lastWidth = window.innerWidth;
-
-function checkLayoutStable() {
-    const currentWidth = window.innerWidth;
-    
-    if (currentWidth === lastWidth) {
-        if (!layoutStable) {
-            layoutStable = true;
-            lastWidth = currentWidth;
-            forceLayoutCalculation();
-            
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        displayNextMessage();
-                    }, 500);
-                });
-            });
-        }
-    } else {
-        lastWidth = currentWidth;
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(checkLayoutStable, 100);
-    }
-}
-
-window.addEventListener('load', () => {
+function startAnimation() {
     forceLayoutCalculation();
     
-    resizeTimeout = setTimeout(checkLayoutStable, 100);
-});
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            container.classList.add('ready');
+            
+            setTimeout(() => {
+                displayNextMessage();
+            }, 500);
+        });
+    });
+}
 
-window.addEventListener('resize', () => {
-    layoutStable = false;
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(checkLayoutStable, 100);
-});
+if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+        startAnimation();
+    }).catch(() => {
+        setTimeout(startAnimation, 1000);
+    });
+} else {
+    window.addEventListener('load', () => {
+        setTimeout(startAnimation, 1000);
+    });
+}
 
 document.body.addEventListener('click', togglePause);
     </script>
