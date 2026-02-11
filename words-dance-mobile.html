@@ -72,29 +72,31 @@ body {
     line-height: 1.6;
     padding: 10px 20px;
     font-size: clamp(1.5rem, 5vw, 3rem);
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+    backface-visibility: hidden;
     opacity: 0;
 }
 
-#text-display.entering {
-    opacity: 0;
-    transform: translateY(50px) scale(0.8);
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
-#text-display.entered {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-}
-
-#text-display.exiting {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#text-display.hidden {
-    opacity: 0;
-    transform: translateY(-30px) scale(0.9);
+@keyframes fadeOutUp {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.9);
+    }
 }
 
 .heart {
@@ -177,17 +179,32 @@ function displayNextMessage() {
     textDisplay.innerHTML = displayText;
     textDisplay.style.fontSize = message.size + 'rem';
     
-    textDisplay.className = 'entering';
+    textDisplay.style.animation = 'none';
+    
+    requestAnimationFrame(() => {
+        textDisplay.style.animation = '';
+        textDisplay.style.animationName = 'fadeInUp';
+        textDisplay.style.animationDuration = '800ms';
+        textDisplay.style.animationTimingFunction = 'cubic-bezier(0.4, 0, 0.2, 1)';
+        textDisplay.style.animationFillMode = 'forwards';
+    });
     
     enterTimer = setTimeout(() => {
-        textDisplay.className = 'entered';
+        textDisplay.style.animationName = 'none';
+        textDisplay.style.opacity = '1';
+        textDisplay.style.transform = 'translateY(0) scale(1)';
     }, 800);
     
     exitTimer = setTimeout(() => {
-        textDisplay.className = 'exiting';
+        textDisplay.style.animation = 'none';
+        textDisplay.style.animationName = 'fadeOutUp';
+        textDisplay.style.animationDuration = '800ms';
+        textDisplay.style.animationTimingFunction = 'cubic-bezier(0.4, 0, 0.2, 1)';
+        textDisplay.style.animationFillMode = 'forwards';
         
         setTimeout(() => {
-            textDisplay.className = 'hidden';
+            textDisplay.style.opacity = '0';
+            textDisplay.style.transform = 'translateY(-30px) scale(0.9)';
             currentIndex = (currentIndex + 1) % messages.length;
             
             setTimeout(() => {
@@ -213,10 +230,15 @@ function togglePause() {
         tapHint.style.opacity = '0';
         
         if (remainingTime <= 0) {
-            textDisplay.className = 'exiting';
+            textDisplay.style.animation = 'none';
+            textDisplay.style.animationName = 'fadeOutUp';
+            textDisplay.style.animationDuration = '800ms';
+            textDisplay.style.animationTimingFunction = 'cubic-bezier(0.4, 0, 0.2, 1)';
+            textDisplay.style.animationFillMode = 'forwards';
             
             setTimeout(() => {
-                textDisplay.className = 'hidden';
+                textDisplay.style.opacity = '0';
+                textDisplay.style.transform = 'translateY(-30px) scale(0.9)';
                 currentIndex = (currentIndex + 1) % messages.length;
                 
                 setTimeout(() => {
@@ -225,10 +247,15 @@ function togglePause() {
             }, 800);
         } else {
             exitTimer = setTimeout(() => {
-                textDisplay.className = 'exiting';
+                textDisplay.style.animation = 'none';
+                textDisplay.style.animationName = 'fadeOutUp';
+                textDisplay.style.animationDuration = '800ms';
+                textDisplay.style.animationTimingFunction = 'cubic-bezier(0.4, 0, 0.2, 1)';
+                textDisplay.style.animationFillMode = 'forwards';
                 
                 setTimeout(() => {
-                    textDisplay.className = 'hidden';
+                    textDisplay.style.opacity = '0';
+                    textDisplay.style.transform = 'translateY(-30px) scale(0.9)';
                     currentIndex = (currentIndex + 1) % messages.length;
                     
                     setTimeout(() => {
@@ -240,10 +267,31 @@ function togglePause() {
     }
 }
 
+function forceLayoutCalculation() {
+    const container = document.querySelector('.container');
+    const textContainer = document.querySelector('.text-container');
+    
+    container.offsetHeight;
+    textContainer.offsetHeight;
+    textDisplay.offsetHeight;
+    
+    const computedStyle = window.getComputedStyle(textDisplay);
+    const fontSize = computedStyle.fontSize;
+    const displayWidth = textDisplay.offsetWidth;
+    
+    textDisplay.style.fontSize = fontSize;
+}
+
 window.addEventListener('load', () => {
-    setTimeout(() => {
-        displayNextMessage();
-    }, 1000);
+    forceLayoutCalculation();
+    
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                displayNextMessage();
+            }, 2000);
+        });
+    });
 });
 
 document.body.addEventListener('click', togglePause);
