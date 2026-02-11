@@ -211,8 +211,6 @@ function displayNextMessage() {
     exitTimer = setTimeout(() => {
         wrapper.className = 'text-wrapper exit';
         
-        tapHint.style.opacity = '1';
-        
         setTimeout(() => {
             wrapper.style.opacity = '0';
             wrapper.style.transform = 'translateY(-30px) scale(0.9)';
