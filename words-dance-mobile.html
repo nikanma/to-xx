@@ -282,16 +282,44 @@ function forceLayoutCalculation() {
     textDisplay.style.fontSize = fontSize;
 }
 
+let resizeTimeout;
+let layoutStable = false;
+let lastWidth = window.innerWidth;
+
+function checkLayoutStable() {
+    const currentWidth = window.innerWidth;
+    
+    if (currentWidth === lastWidth) {
+        if (!layoutStable) {
+            layoutStable = true;
+            lastWidth = currentWidth;
+            forceLayoutCalculation();
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        displayNextMessage();
+                    }, 500);
+                });
+            });
+        }
+    } else {
+        lastWidth = currentWidth;
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(checkLayoutStable, 100);
+    }
+}
+
 window.addEventListener('load', () => {
     forceLayoutCalculation();
     
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                displayNextMessage();
-            }, 2000);
-        });
-    });
+    resizeTimeout = setTimeout(checkLayoutStable, 100);
+});
+
+window.addEventListener('resize', () => {
+    layoutStable = false;
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(checkLayoutStable, 100);
 });
 
 document.body.addEventListener('click', togglePause);
