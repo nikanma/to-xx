@@ -238,6 +238,7 @@ function togglePause() {
         const pausedDuration = Date.now() - pauseStartTime;
         remainingTime = Math.max(0, remainingTime - pausedDuration);
         isPaused = false;
+        tapHint.style.opacity = '1';
         
         if (remainingTime <= 0) {
             if (wrapper) {
