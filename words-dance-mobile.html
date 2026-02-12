@@ -123,9 +123,184 @@ body {
     50% { background-position: 100% 50%; }
 }
 
-@keyframes heartbeat {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
+.tap-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(0, 0, 0, 0.4);
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.music-toggle {
+    position: fixed;
+    width: 50px;
+    height: 50px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    left: 20px;
+    bottom: 100px;
+    user-select: none;
+    touch-action: none;
+}
+
+.music-toggle:hover {
+    transform: scale(1.1);
+}
+
+.music-toggle.dragging {
+    cursor: grabbing;
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.music-toggle.playing {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); }
+    50% { box-shadow: 0 4px 25px rgba(38, 198, 218, 0.5); }
+}
+
+.music-icon {
+    font-size: 24px;
+    color: #333;
+    pointer-events: none;
+}
+
+.music-panel {
+    position: fixed;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    display: none;
+    min-width: 280px;
+    max-width: 90vw;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.music-panel.show {
+    display: block;
+    opacity: 1;
+    transform: scale(1);
+}
+
+.music-list {
+    margin-bottom: 15px;
+}
+
+.music-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background 0.2s ease;
+    margin-bottom: 8px;
+}
+
+.music-item:last-child {
+    margin-bottom: 0;
+}
+
+.music-item:hover {
+    background: rgba(38, 198, 218, 0.1);
+}
+
+.music-item.selected {
+    color: #26c6da;
+    font-weight: bold;
+}
+
+.radio-circle {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #999;
+    border-radius: 50%;
+    margin-right: 12px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.music-item.selected .radio-circle {
+    background: #26c6da;
+    border-color: #26c6da;
+}
+
+.music-name {
+    font-size: 15px;
+}
+
+.music-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.btn-play {
+    background: #26c6da;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.btn-play:hover {
+    background: #00bcd4;
+    transform: scale(1.05);
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.volume-slider {
+    width: 80px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ddd;
+    border-radius: 2px;
+    outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #26c6da;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.volume-icon {
+    font-size: 16px;
 }
 
 @media (max-width: 480px) {
@@ -140,19 +315,11 @@ body {
     #text-display {
         padding: 8px 16px;
     }
-}
-
-.tap-hint {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: rgba(0, 0, 0, 0.4);
-    font-size: 1rem;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    z-index: 100;
+    
+    .music-panel {
+        padding: 15px;
+        min-width: 260px;
+    }
 }
     </style>
 </head>
@@ -163,12 +330,34 @@ body {
         </div>
     </div>
     <div class="tap-hint">点击可以等一会喔</div>
+    
+    <div class="music-toggle" id="musicToggle">
+        <span class="music-icon">♪</span>
+    </div>
+    
+    <div class="music-panel" id="musicPanel">
+        <div class="music-list" id="musicList"></div>
+        <div class="music-controls">
+            <button class="btn-play" id="btnPlay">播放</button>
+            <div class="volume-control">
+                <span class="volume-icon">🔊</span>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
+            </div>
+        </div>
+    </div>
+
     <script>
 const messages = [
     { text: '宝贝', time: 3000, size: 5 },
     { text: '喜欢你❤', time: 5000, size: 4 },
     { text: '始于对视时的怦然心动', time: 7000, size: 5 },
     { text: '亲亲你😚', time: 2000, size: 4 }
+];
+
+const musicList = [
+    { name: '浪漫钢琴曲', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+    { name: '轻音乐 - 天空之城', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+    { name: '纯音乐 - 告白气球', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }
 ];
 
 const textDisplay = document.getElementById('text-display');
@@ -180,6 +369,13 @@ let pauseStartTime = 0;
 let exitTimer = null;
 let enterTimer = null;
 let wrapper = null;
+
+let musicState = {
+    currentMusicIndex: -1,
+    isPlaying: false,
+    volume: 0.5,
+    audio: null
+};
 
 function displayNextMessage() {
     if (isPaused) return;
@@ -209,7 +405,6 @@ function displayNextMessage() {
     
     exitTimer = setTimeout(() => {
         wrapper.className = 'text-wrapper exit';
-        
         tapHint.style.opacity = '0';
         
         setTimeout(() => {
@@ -242,12 +437,10 @@ function togglePause() {
         if (remainingTime <= 0) {
             if (wrapper) {
                 wrapper.className = 'text-wrapper exit';
-                
                 setTimeout(() => {
                     wrapper.style.opacity = '0';
                     wrapper.style.transform = 'translateY(-30px) scale(0.9)';
                     currentIndex = (currentIndex + 1) % messages.length;
-                    
                     setTimeout(() => {
                         displayNextMessage();
                     }, 800);
@@ -257,12 +450,10 @@ function togglePause() {
             exitTimer = setTimeout(() => {
                 if (wrapper) {
                     wrapper.className = 'text-wrapper exit';
-                    
                     setTimeout(() => {
                         wrapper.style.opacity = '0';
                         wrapper.style.transform = 'translateY(-30px) scale(0.9)';
                         currentIndex = (currentIndex + 1) % messages.length;
-                        
                         setTimeout(() => {
                             displayNextMessage();
                         }, 800);
@@ -273,16 +464,7 @@ function togglePause() {
     }
 }
 
-function forceLayoutCalculation() {
-    const textContainer = document.querySelector('.text-container');
-    void textContainer.offsetHeight;
-    const computedStyle = window.getComputedStyle(textDisplay);
-    textDisplay.style.fontSize = computedStyle.fontSize;
-}
-
 function startAnimation() {
-    forceLayoutCalculation();
-    
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             setTimeout(() => {
@@ -301,6 +483,186 @@ if (document.fonts && document.fonts.ready) {
 }
 
 document.body.addEventListener('click', togglePause);
+
+const musicToggle = document.getElementById('musicToggle');
+const musicPanel = document.getElementById('musicPanel');
+const musicListContainer = document.getElementById('musicList');
+const btnPlay = document.getElementById('btnPlay');
+const volumeSlider = document.getElementById('volumeSlider');
+
+let isDragging = false;
+let dragStartX, dragStartY;
+let toggleStartX, toggleStartY;
+
+function initMusicList() {
+    musicListContainer.innerHTML = '';
+    musicList.forEach((music, index) => {
+        const item = document.createElement('div');
+        item.className = 'music-item';
+        item.dataset.index = index;
+        item.innerHTML = `
+            <div class="radio-circle"></div>
+            <span class="music-name">${music.name}</span>
+        `;
+        item.addEventListener('click', () => selectMusic(index));
+        musicListContainer.appendChild(item);
+    });
+}
+
+function selectMusic(index) {
+    musicState.currentMusicIndex = index;
+    updateMusicListUI();
+    
+    if (musicState.audio) {
+        musicState.audio.pause();
+        musicState.audio = null;
+    }
+    
+    musicState.audio = new Audio(musicList[index].url);
+    musicState.audio.volume = musicState.volume;
+    musicState.audio.loop = true;
+    
+    musicState.audio.play().then(() => {
+        musicState.isPlaying = true;
+        updatePlayButton();
+        musicToggle.classList.add('playing');
+        closePanel();
+    }).catch(e => {
+        console.log('播放失败:', e);
+        musicState.isPlaying = false;
+        updatePlayButton();
+    });
+}
+
+function updateMusicListUI() {
+    const items = musicListContainer.querySelectorAll('.music-item');
+    items.forEach((item, index) => {
+        if (index === musicState.currentMusicIndex) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+function togglePlay() {
+    if (!musicState.audio) {
+        if (musicState.currentMusicIndex === -1) {
+            selectMusic(0);
+        }
+        return;
+    }
+    
+    if (musicState.isPlaying) {
+        musicState.audio.pause();
+        musicState.isPlaying = false;
+        musicToggle.classList.remove('playing');
+    } else {
+        musicState.audio.play();
+        musicState.isPlaying = true;
+        musicToggle.classList.add('playing');
+    }
+    updatePlayButton();
+}
+
+function updatePlayButton() {
+    btnPlay.textContent = musicState.isPlaying ? '暂停' : '播放';
+}
+
+function setVolume(value) {
+    musicState.volume = value / 100;
+    if (musicState.audio) {
+        musicState.audio.volume = musicState.volume;
+    }
+}
+
+function openPanel() {
+    const rect = musicToggle.getBoundingClientRect();
+    musicPanel.style.left = Math.min(rect.left, window.innerWidth - 300) + 'px';
+    musicPanel.style.top = (rect.top - 200) + 'px';
+    musicPanel.classList.add('show');
+}
+
+function closePanel() {
+    musicPanel.classList.remove('show');
+    setTimeout(() => {
+        musicPanel.style.display = 'none';
+    }, 300);
+}
+
+musicToggle.addEventListener('mousedown', startDrag);
+musicToggle.addEventListener('touchstart', startDrag, { passive: false });
+
+document.addEventListener('mousemove', drag);
+document.addEventListener('touchmove', drag, { passive: false });
+
+document.addEventListener('mouseup', endDrag);
+document.addEventListener('touchend', endDrag);
+
+function startDrag(e) {
+    isDragging = true;
+    musicToggle.classList.add('dragging');
+    
+    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+    
+    dragStartX = clientX;
+    dragStartY = clientY;
+    
+    const rect = musicToggle.getBoundingClientRect();
+    toggleStartX = rect.left;
+    toggleStartY = rect.top;
+}
+
+function drag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+    
+    const deltaX = clientX - dragStartX;
+    const deltaY = clientY - dragStartY;
+    
+    let newX = toggleStartX + deltaX;
+    let newY = toggleStartY + deltaY;
+    
+    newX = Math.max(10, Math.min(newX, window.innerWidth - 60));
+    newY = Math.max(10, Math.min(newY, window.innerHeight - 60));
+    
+    musicToggle.style.left = newX + 'px';
+    musicToggle.style.bottom = 'auto';
+    musicToggle.style.top = newY + 'px';
+}
+
+function endDrag(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    musicToggle.classList.remove('dragging');
+    
+    const deltaX = e.type.includes('touch') ? 
+        Math.abs(e.changedTouches[0].clientX - dragStartX) : 
+        Math.abs(e.clientX - dragStartX);
+    const deltaY = e.type.includes('touch') ? 
+        Math.abs(e.changedTouches[0].clientY - dragStartY) : 
+        Math.abs(e.clientY - dragStartY);
+    
+    if (deltaX < 5 && deltaY < 5) {
+        if (musicPanel.classList.contains('show')) {
+            closePanel();
+        } else {
+            musicPanel.style.display = 'block';
+            requestAnimationFrame(() => {
+                openPanel();
+            });
+        }
+    }
+}
+
+btnPlay.addEventListener('click', togglePlay);
+volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
+
+initMusicList();
     </script>
 </body>
 </html>
