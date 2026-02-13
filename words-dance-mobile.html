@@ -402,10 +402,13 @@ const messages = [
 ];
 
 const musicList = [
-    { name: '浪漫钢琴曲', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-    { name: '轻音乐 - 天空之城', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-    { name: '纯音乐 - 告白气球', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }
+    { name: '有何不可', url: 'https://nikanma.github.io/to-xx/youhebuke.mp3' },
+    { name: '屋顶', url: 'https://nikanma.github.io/to-xx/wuding.mp3' },
+    { name: '特别的人', url: 'https://nikanma.github.io/to-xx/tebiederen.mp3' }
 ];
+
+const musicKey = 'musicProgress';
+const musicSrcKey = 'musicSrc';
 
 const textDisplay = document.getElementById('text-display');
 const tapHint = document.querySelector('.tap-hint');
@@ -472,7 +475,6 @@ function displayNextMessage() {
 }
 
 function togglePause(e) {
-    // 检查点击目标是否在音乐相关元素内
     if (e.target.closest('.music-toggle') || e.target.closest('.music-panel')) {
         return;
     }
@@ -646,6 +648,50 @@ function closePanel() {
     musicPanel.style.transform = 'translate(-50%, -50%) scale(0.9)';
 }
 
+function saveMusicProgress() {
+    if (musicState.audio && !musicState.audio.paused) {
+        localStorage.setItem(musicKey, musicState.audio.currentTime);
+        localStorage.setItem(musicSrcKey, musicState.audio.src);
+    }
+}
+
+setInterval(saveMusicProgress, 5000);
+
+function restoreMusicProgress() {
+    const savedTime = localStorage.getItem(musicKey);
+    const savedSrc = localStorage.getItem(musicSrcKey);
+    
+    if (savedSrc) {
+        let matchedIndex = -1;
+        for (let i = 0; i < musicList.length; i++) {
+            if (savedSrc.includes(musicList[i].url.split('/').pop())) {
+                matchedIndex = i;
+                break;
+            }
+        }
+        
+        if (matchedIndex !== -1) {
+            musicState.currentMusicIndex = matchedIndex;
+            musicState.audio = new Audio(musicList[matchedIndex].url);
+            musicState.audio.volume = musicState.volume;
+            musicState.audio.loop = true;
+            
+            if (savedTime) {
+                musicState.audio.currentTime = parseFloat(savedTime);
+            }
+            
+            musicState.audio.play().then(() => {
+                musicState.isPlaying = true;
+                updatePlayButton();
+                musicToggle.classList.add('playing');
+                updateMusicListUI();
+            }).catch(e => {
+                console.log('自动播放被阻止');
+            });
+        }
+    }
+}
+
 musicToggle.addEventListener('mousedown', startDrag);
 musicToggle.addEventListener('touchstart', startDrag, { passive: false });
 
@@ -712,7 +758,6 @@ function endDrag(e) {
 btnPlay.addEventListener('click', togglePlay);
 volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
 
-// 面板拖动功能
 const panelDragHandle = document.getElementById('panelDragHandle');
 let isPanelDragging = false;
 let panelDragStartX, panelDragStartY;
@@ -751,7 +796,6 @@ function dragPanel(e) {
     let newX = panelStartX + deltaX;
     let newY = panelStartY + deltaY;
     
-    // 边界检查
     const panelRect = musicPanel.getBoundingClientRect();
     newX = Math.max(10, Math.min(newX, window.innerWidth - panelRect.width - 10));
     newY = Math.max(10, Math.min(newY, window.innerHeight - panelRect.height - 10));
@@ -767,7 +811,6 @@ function endPanelDrag(e) {
     musicPanel.classList.remove('dragging');
 }
 
-// 添加面板拖动到全局事件监听
 document.addEventListener('mousemove', (e) => {
     if (isDragging) drag(e);
     if (isPanelDragging) dragPanel(e);
@@ -789,6 +832,12 @@ document.addEventListener('touchend', (e) => {
 });
 
 initMusicList();
+
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        restoreMusicProgress();
+    }, 500);
+});
     </script>
 </body>
 </html>
