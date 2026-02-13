@@ -124,6 +124,11 @@ body {
     animation: heartbeat 1s ease-in-out infinite;
 }
 
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
 @keyframes gradientShift {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -636,11 +641,9 @@ function openPanel() {
 }
 
 function closePanel() {
+    musicPanel.style.display = 'none';
     musicPanel.classList.remove('show');
     musicPanel.style.transform = 'translate(-50%, -50%) scale(0.9)';
-    setTimeout(() => {
-        musicPanel.style.display = 'none';
-    }, 300);
 }
 
 musicToggle.addEventListener('mousedown', startDrag);
