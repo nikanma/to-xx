@@ -550,6 +550,7 @@ const volumeSlider = document.getElementById('volumeSlider');
 let isDragging = false;
 let dragStartX, dragStartY;
 let toggleStartX, toggleStartY;
+let touchStartTime = 0;
 
 function initMusicList() {
     musicListContainer.innerHTML = '';
@@ -566,7 +567,17 @@ function initMusicList() {
     });
 }
 
+function onMusicEnded() {
+    musicState.isPlaying = false;
+    updatePlayButton();
+    musicToggle.classList.remove('playing');
+}
+
 function selectMusic(index) {
+    if (musicState.audio) {
+        musicState.audio.removeEventListener('ended', onMusicEnded);
+    }
+    
     musicState.currentMusicIndex = index;
     updateMusicListUI();
     
@@ -577,7 +588,8 @@ function selectMusic(index) {
     
     musicState.audio = new Audio(musicList[index].url);
     musicState.audio.volume = musicState.volume;
-    musicState.audio.loop = true;
+    
+    musicState.audio.addEventListener('ended', onMusicEnded);
     
     closePanel();
     
@@ -674,7 +686,8 @@ function restoreMusicProgress() {
             musicState.currentMusicIndex = matchedIndex;
             musicState.audio = new Audio(musicList[matchedIndex].url);
             musicState.audio.volume = musicState.volume;
-            musicState.audio.loop = true;
+            
+            musicState.audio.addEventListener('ended', onMusicEnded);
             
             if (savedTime) {
                 musicState.audio.currentTime = parseFloat(savedTime);
@@ -696,6 +709,7 @@ musicToggle.addEventListener('mousedown', startDrag);
 musicToggle.addEventListener('touchstart', startDrag, { passive: false });
 
 function startDrag(e) {
+    touchStartTime = Date.now();
     isDragging = true;
     musicToggle.classList.add('dragging');
     
@@ -736,14 +750,11 @@ function endDrag(e) {
     isDragging = false;
     musicToggle.classList.remove('dragging');
     
-    const deltaX = e.type.includes('touch') ? 
-        Math.abs(e.changedTouches[0].clientX - dragStartX) : 
-        Math.abs(e.clientX - dragStartX);
-    const deltaY = e.type.includes('touch') ? 
-        Math.abs(e.changedTouches[0].clientY - dragStartY) : 
-        Math.abs(e.clientY - dragStartY);
+    const touchDuration = e.type.includes('touch') ? 
+        Date.now() - touchStartTime : 
+        0;
     
-    if (deltaX < 5 && deltaY < 5) {
+    if (touchDuration < 300) {
         if (musicPanel.classList.contains('show')) {
             closePanel();
         } else {
