@@ -116,6 +116,12 @@ body {
 .heart {
     color: #FF7F50;
     display: inline-block;
+    animation: heartbeat 1s ease-in-out infinite;
+}
+
+.kiss-emoji {
+    display: inline-block;
+    animation: heartbeat 1s ease-in-out infinite;
 }
 
 @keyframes gradientShift {
@@ -423,6 +429,9 @@ function displayNextMessage() {
     if (message.text.includes('❤')) {
         displayText = message.text.replace('❤', '<span class="heart">❤</span>');
     }
+    if (message.text.includes('😚')) {
+        displayText = displayText.replace('😚', '<span class="kiss-emoji">😚</span>');
+    }
     
     wrapper = document.createElement('span');
     wrapper.className = 'text-wrapper enter';
@@ -563,11 +572,12 @@ function selectMusic(index) {
     musicState.audio.volume = musicState.volume;
     musicState.audio.loop = true;
     
+    closePanel();
+    
     musicState.audio.play().then(() => {
         musicState.isPlaying = true;
         updatePlayButton();
         musicToggle.classList.add('playing');
-        closePanel();
     }).catch(e => {
         console.log('播放失败:', e);
         musicState.isPlaying = false;
