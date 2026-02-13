@@ -147,7 +147,7 @@ body {
     align-items: center;
     cursor: grab;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
+    z-index: 1002;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     left: 20px;
     bottom: 100px;
@@ -185,7 +185,7 @@ body {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 20px;
-    padding: 20px;
+    padding: 0 20px 20px 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     z-index: 1001;
     display: none;
@@ -194,6 +194,38 @@ body {
     opacity: 0;
     transform: scale(0.9);
     transition: opacity 0.3s ease, transform 0.3s ease;
+    cursor: grab;
+}
+
+.music-panel.dragging {
+    cursor: grabbing;
+}
+
+.panel-drag-handle {
+    padding: 15px 0 10px 0;
+    text-align: center;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.panel-drag-handle:active {
+    cursor: grabbing;
+}
+
+.drag-line {
+    width: 40px;
+    height: 4px;
+    background: #ddd;
+    border-radius: 2px;
+    margin: 0 auto 5px;
+}
+
+.drag-icon {
+    font-size: 12px;
+    color: #999;
+    letter-spacing: 2px;
+    display: block;
 }
 
 .music-panel.show {
@@ -336,6 +368,10 @@ body {
     </div>
     
     <div class="music-panel" id="musicPanel">
+        <div class="panel-drag-handle" id="panelDragHandle">
+            <div class="drag-line"></div>
+            <span class="drag-icon">⋮⋮</span>
+        </div>
         <div class="music-list" id="musicList"></div>
         <div class="music-controls">
             <button class="btn-play" id="btnPlay">播放</button>
@@ -531,6 +567,7 @@ function selectMusic(index) {
         musicState.isPlaying = true;
         updatePlayButton();
         musicToggle.classList.add('playing');
+        closePanel();
     }).catch(e => {
         console.log('播放失败:', e);
         musicState.isPlaying = false;
@@ -582,14 +619,15 @@ function setVolume(value) {
 }
 
 function openPanel() {
-    const rect = musicToggle.getBoundingClientRect();
-    musicPanel.style.left = Math.min(rect.left, window.innerWidth - 300) + 'px';
-    musicPanel.style.top = (rect.top - 200) + 'px';
+    musicPanel.style.left = '50%';
+    musicPanel.style.top = '50%';
+    musicPanel.style.transform = 'translate(-50%, -50%) scale(1)';
     musicPanel.classList.add('show');
 }
 
 function closePanel() {
     musicPanel.classList.remove('show');
+    musicPanel.style.transform = 'translate(-50%, -50%) scale(0.9)';
     setTimeout(() => {
         musicPanel.style.display = 'none';
     }, 300);
@@ -597,12 +635,6 @@ function closePanel() {
 
 musicToggle.addEventListener('mousedown', startDrag);
 musicToggle.addEventListener('touchstart', startDrag, { passive: false });
-
-document.addEventListener('mousemove', drag);
-document.addEventListener('touchmove', drag, { passive: false });
-
-document.addEventListener('mouseup', endDrag);
-document.addEventListener('touchend', endDrag);
 
 function startDrag(e) {
     isDragging = true;
@@ -666,6 +698,82 @@ function endDrag(e) {
 
 btnPlay.addEventListener('click', togglePlay);
 volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
+
+// 面板拖动功能
+const panelDragHandle = document.getElementById('panelDragHandle');
+let isPanelDragging = false;
+let panelDragStartX, panelDragStartY;
+let panelStartX, panelStartY;
+
+panelDragHandle.addEventListener('mousedown', startPanelDrag);
+panelDragHandle.addEventListener('touchstart', startPanelDrag, { passive: false });
+
+function startPanelDrag(e) {
+    isPanelDragging = true;
+    musicPanel.classList.add('dragging');
+    
+    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+    
+    panelDragStartX = clientX;
+    panelDragStartY = clientY;
+    
+    const rect = musicPanel.getBoundingClientRect();
+    panelStartX = rect.left;
+    panelStartY = rect.top;
+    
+    e.preventDefault();
+}
+
+function dragPanel(e) {
+    if (!isPanelDragging) return;
+    e.preventDefault();
+    
+    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+    
+    const deltaX = clientX - panelDragStartX;
+    const deltaY = clientY - panelDragStartY;
+    
+    let newX = panelStartX + deltaX;
+    let newY = panelStartY + deltaY;
+    
+    // 边界检查
+    const panelRect = musicPanel.getBoundingClientRect();
+    newX = Math.max(10, Math.min(newX, window.innerWidth - panelRect.width - 10));
+    newY = Math.max(10, Math.min(newY, window.innerHeight - panelRect.height - 10));
+    
+    musicPanel.style.left = newX + 'px';
+    musicPanel.style.top = newY + 'px';
+    musicPanel.style.transform = 'scale(1)';
+}
+
+function endPanelDrag(e) {
+    if (!isPanelDragging) return;
+    isPanelDragging = false;
+    musicPanel.classList.remove('dragging');
+}
+
+// 添加面板拖动到全局事件监听
+document.addEventListener('mousemove', (e) => {
+    if (isDragging) drag(e);
+    if (isPanelDragging) dragPanel(e);
+});
+
+document.addEventListener('touchmove', (e) => {
+    if (isDragging) drag(e);
+    if (isPanelDragging) dragPanel(e);
+}, { passive: false });
+
+document.addEventListener('mouseup', (e) => {
+    if (isDragging) endDrag(e);
+    if (isPanelDragging) endPanelDrag(e);
+});
+
+document.addEventListener('touchend', (e) => {
+    if (isDragging) endDrag(e);
+    if (isPanelDragging) endPanelDrag(e);
+});
 
 initMusicList();
     </script>
