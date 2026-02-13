@@ -158,7 +158,6 @@ body {
         <p class="subtitle">With Love</p>
         
         <div class="qr-container">
-            <!-- 二维码占位，实际使用时替换为真实二维码 -->
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://nikanma.github.io/to-xx/words-dance-mobile.html" alt="二维码">
         </div>
         
@@ -166,5 +165,54 @@ body {
         
         <p class="hint">长按或扫码打开 💝</p>
     </div>
+
+    <audio id="bgMusic" preload="auto">
+        <source src="https://nikanma.github.io/to-xx/youhebuke.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const bgMusic = document.getElementById('bgMusic');
+        const musicKey = 'musicProgress';
+        const musicSrcKey = 'musicSrc';
+
+        function restoreMusicProgress() {
+            const savedTime = localStorage.getItem(musicKey);
+            const savedSrc = localStorage.getItem(musicSrcKey);
+            
+            if (savedSrc && savedSrc.includes('youhebuke.mp3')) {
+                bgMusic.src = 'https://nikanma.github.io/to-xx/youhebuke.mp3';
+                bgMusic.volume = 0.5;
+                
+                if (savedTime) {
+                    bgMusic.currentTime = parseFloat(savedTime);
+                }
+                
+                bgMusic.play().then(() => {
+                    console.log('音乐继续播放，从 ' + bgMusic.currentTime + ' 秒开始');
+                }).catch(e => {
+                    console.log('播放被阻止');
+                });
+            }
+        }
+
+        function saveMusicProgress() {
+            if (bgMusic && !bgMusic.paused) {
+                localStorage.setItem(musicKey, bgMusic.currentTime);
+                localStorage.setItem(musicSrcKey, bgMusic.src);
+            }
+        }
+
+        setInterval(saveMusicProgress, 5000);
+
+        window.addEventListener('load', function() {
+            restoreMusicProgress();
+        });
+
+        setTimeout(function() {
+            if (bgMusic.paused) {
+                restoreMusicProgress();
+            }
+        }, 1500);
+    </script>
 </body>
 </html>
