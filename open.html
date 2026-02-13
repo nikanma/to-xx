@@ -146,13 +146,53 @@
         </div>
     </div>
 
+    <audio id="bgMusic" preload="auto">
+        <source src="https://nikanma.github.io/to-xx/youhebuke.mp3" type="audio/mpeg">
+    </audio>
+
     <script>
         const envelope = document.getElementById('envelope');
+        const bgMusic = document.getElementById('bgMusic');
         let isOpening = false;
+        let musicStarted = false;
+
+        const musicKey = 'musicProgress';
+        const musicSrcKey = 'musicSrc';
 
         function isDesktop() {
             return window.innerWidth > 768;
         }
+
+        function startMusic() {
+            if (!musicStarted) {
+                bgMusic.volume = 0.5;
+                bgMusic.play().then(() => {
+                    musicStarted = true;
+                }).catch(e => {
+                    console.log('自动播放被阻止，请用户交互后播放');
+                });
+            }
+        }
+
+        function saveMusicProgress() {
+            if (bgMusic && !bgMusic.paused) {
+                localStorage.setItem(musicKey, bgMusic.currentTime);
+                localStorage.setItem(musicSrcKey, bgMusic.src);
+            }
+        }
+
+        setInterval(saveMusicProgress, 5000);
+
+        document.body.addEventListener('click', function initMusic() {
+            startMusic();
+            document.body.removeEventListener('click', initMusic);
+        }, { once: true });
+
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                startMusic();
+            }, 1000);
+        });
 
         function handleOpen() {
             if (isOpening) return;
