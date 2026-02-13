@@ -126,6 +126,31 @@
             transform: rotateX(-180deg);
         }
 
+        .music-hint {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            z-index: 1000;
+            cursor: pointer;
+            animation: hintPulse 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .music-hint.hidden {
+            display: none;
+        }
+
+        @keyframes hintPulse {
+            0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+        }
+
         @media (max-width: 480px) {
             .envelope-container {
                 width: 280px;
@@ -146,6 +171,8 @@
         </div>
     </div>
 
+    <div class="music-hint" id="musicHint">点击任意位置播放音乐</div>
+
     <audio id="bgMusic" preload="auto">
         <source src="https://nikanma.github.io/to-xx/youhebuke.mp3" type="audio/mpeg">
     </audio>
@@ -153,6 +180,7 @@
     <script>
         const envelope = document.getElementById('envelope');
         const bgMusic = document.getElementById('bgMusic');
+        const musicHint = document.getElementById('musicHint');
         let isOpening = false;
         let musicStarted = false;
 
@@ -181,22 +209,37 @@
             }
         }
 
-        setInterval(saveMusicProgress, 5000);
-
-        document.body.addEventListener('click', function initMusic() {
-            startMusic();
-            document.body.removeEventListener('click', initMusic);
-        }, { once: true });
-
+        // 页面加载后立即保存进度
         window.addEventListener('load', function() {
+            // 立即保存初始进度
+            localStorage.setItem(musicKey, 0);
+            localStorage.setItem(musicSrcKey, bgMusic.src);
+            
+            // 延迟尝试播放音乐
             setTimeout(function() {
                 startMusic();
-            }, 1000);
+            }, 500);
+        });
+
+        // 每5秒保存一次进度
+        setInterval(saveMusicProgress, 5000);
+
+        // 用户点击页面时播放音乐并隐藏提示
+        document.body.addEventListener('click', function initMusic() {
+            startMusic();
+            musicHint.classList.add('hidden');
+            document.body.removeEventListener('click', initMusic);
         });
 
         function handleOpen() {
             if (isOpening) return;
             isOpening = true;
+
+            // 跳转前立即保存当前进度
+            if (bgMusic && !bgMusic.paused) {
+                localStorage.setItem(musicKey, bgMusic.currentTime);
+                localStorage.setItem(musicSrcKey, bgMusic.src);
+            }
 
             envelope.classList.add('opening');
 
